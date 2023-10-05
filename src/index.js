@@ -1,85 +1,81 @@
-import { fetchBreeds, fetchCatByBreed } from "./comon";
-import './styles.css';
-import { Notify } from 'notiflix/build/notiflix-notify-aio';
-import SlimSelect from 'slim-select'
-import 'slim-select/dist/slimselect.css';
+import SlimSelect from 'slim-select';
+import Notiflix from 'notiflix';
+import { CatApiService } from './comon';
+import Loader from './loader';
 
-const temp = {
-    breedSelect: document.querySelector('.breed-select'),
-    catInfo: document.querySelector('.cat-info'),
+const refs = {
+    select: document.querySelector('.breed-select'),
     loader: document.querySelector('.loader'),
     error: document.querySelector('.error'),
+    catInfo: document.querySelector('.cat-info'),
 };
-const { breedSelect, catInfo, loader, error } = temp;
 
-catInfo.classList.add('is-hidden');
-loader.classList.replace('loader', 'is-hidden');
-error.classList.add('is-hidden');
+const catApiServiceInstance = new CatApiService();
 
-let arrayId = [];
-fetchBreeds()
-    .then(data => {
-        data.forEach(element => {
-            arrayId.push({ text: element.name, value: element.id });
-        });
+const loader = new Loader({
+    hidden: true,
+});
+
+//Fetch порід котів + ініціалізація SlimSelect для вибору породи.
+catApiServiceInstance
+    .fetchBreeds()
+    .then(({ data }) => {
+        createOptionMarkup(data);
         new SlimSelect({
-            select: breedSelect,
-            data: arrayId
+            select: refs.select,
         });
     })
-    .catch(fetchErr);
-
-breedSelect.addEventListener('change', selBreed);
-
-function selBreed(event) {
-    loader.classList.replace('is-hidden', 'loader');
-    breedSelect.classList.add('is-hidden');
-    catInfo.classList.add('is-hidden');
-
-    const breedId = event.currentTarget.value;
-    fetchCatByBreed(breedId)
-        .then(data => {
-            loader.classList.replace('loader', 'is-hidden');
-            breedSelect.classList.remove('is-hidden');
-            const { url, breeds } = data[0];
-
-            catInfo.innerHTML = `<div class="box-img">
-            <img src="${url}" 
-            alt="${breeds[0].name}"
-            width="400"/>
-            </div>
-
-            <div class="box">
-            <h1>${breeds[0].name}</h1>
-            <p>${breeds[0].description}</p>
-            <p><b>Temperament:</b> ${breeds[0].temperament}</p>
-            </div>`
-            catInfo.classList.remove('is-hidden');
-        })
-        .catch(fetchErr);
-};
-
-function fetchErr(error) {
-    breedSelect.classList.remove('is-hidden');
-    loader.classList.replace('loader', 'is-hidden');
-
-    Notify.failure('Oops! Something went wrong! Try reloading the page or select another cat breed!', {
-        position: 'center-center',
-        timeout: 6000,
-        width: '350px',
-        fontSize: '24px'
+    .catch(data => {
+        loader.showErrorLoader();
+        Notiflix.Notify.failure(data.message);
     });
-};
 
+//Функція для створення параметрів розміткм із <select>
+function createOptionMarkup(data) {
+    const optionsMarkup = data
+        .map(({ id, name }) => `<option value=${id}>${name}</option>`)
+        .join('');
 
+    return refs.select.insertAdjacentHTML('afterbegin', optionsMarkup);
+}
 
+refs.select.addEventListener('change', handleCatByBreed);
 
+//Отримуємо кота по породам та рендерим розмітку catInfo.
+function handleCatByBreed(event) {
+    const selectedBreed = event.target.value;
+    refs.catInfo.innerHTML = ' ';
+    loader.show();
 
+    catApiServiceInstance
+        .fetchCatByBreed(selectedBreed)
+        .then(({ data }) => {
+            loader.hide();
+            // Деструктур-ія об'єкта даних
+            const { breeds, url } = data[0];
+            const { name, description, temperament } = breeds[0];
 
+            // Відтворення розмітки в div (.cat.info)
+            refs.catInfo.innerHTML = createCatCardMarkup(
+                url,
+                name,
+                description,
+                temperament
+            );
+        })
+        .catch(data => {
+            loader.showErrorLoader();
+            Notiflix.Notify.failure(
+                'Oops! Something went wrong! Try reloading the page!'
+            );
+        });
+}
 
-
-
-
-
-
-
+// Функція, яка створ. розмітку cat card
+function createCatCardMarkup(url, name, description, temperament) {
+    return `
+    <img class="cat-image" src=${url} alt="${name}"/>
+    <h2 class="cat-name">${name}</h2>
+    <p class="cat-description"><span class="cat-span">Description: </span>${description}</p>
+    <p class="cat-temperament"><span class="cat-span">Temperament: </span> ${temperament}</p>`;
+}
