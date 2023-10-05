@@ -9,13 +9,13 @@ const refs = {
     error: document.querySelector('.error'),
     catInfo: document.querySelector('.cat-info'),
 };
-
+const loader = new Loader({
+    hidden: false,
+});
 const catApiServiceInstance = new CatApiService();
 
-const loader = new Loader({
-    hidden: true,
-});
 
+loader.show();
 //Fetch порід котів + ініціалізація SlimSelect для вибору породи.
 catApiServiceInstance
     .fetchBreeds()
@@ -24,6 +24,7 @@ catApiServiceInstance
         new SlimSelect({
             select: refs.select,
         });
+        loader.hide();
     })
     .catch(data => {
         loader.showErrorLoader();

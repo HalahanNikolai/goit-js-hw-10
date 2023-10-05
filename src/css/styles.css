@@ -8,7 +8,7 @@
 body {
   font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
   color: rgb(235, 231, 213);
-  background-color: rgb(29, 11, 11);
+  background-color: rgb(34, 17, 17);
 
   background-repeat: no-repeat;
   background-size: cover;
@@ -64,9 +64,6 @@ body {
   top: -90px;
 }
 
-.is-hidden {
-  display: none;
-}
 .breed-select {
   margin-top: 10px;
   padding: 10px;
@@ -74,10 +71,15 @@ body {
   justify-content: center;
   gap: 40px;
   background-color: rgb(7, 84, 107);
-  border: 1px solid #0b5b86;
+  border: 0px solid #0b5b86;
   /* *** */
   max-width: 400px;
   margin-left: auto;
   margin-right: auto;
   background-color: transparent;
+  /* display: none; */
+}
+
+.is-hidden {
+  display: none;
 }
